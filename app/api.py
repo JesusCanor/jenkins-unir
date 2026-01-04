@@ -46,10 +46,10 @@ def multiply(op_1, op_2):
 def divide(op_1, op_2):
     try:
         num_1, num_2 = util.convert_to_number(op_1), util.convert_to_number(op_2)
-        
+
         if num_2 == 0:
             return ("ERROR DIVIDE/0", 406, HEADERS)
-        
+
         return ("{}".format(CALCULATOR.divide(num_1, num_2)), http.client.OK, HEADERS)
     except TypeError as e:
         return (str(e), http.client.BAD_REQUEST, HEADERS)
@@ -57,4 +57,4 @@ def divide(op_1, op_2):
 
 @api_application.route("/health-check", methods=["GET"])
 def healthCheck():
-        return ("OK", http.client.OK, HEADERS)
+    return ("OK", http.client.OK, HEADERS)
