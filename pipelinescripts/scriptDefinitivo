@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Clean workspace') {
+            steps { deleteDir() }
+        }
+
+        stage('Get Code') {
+            steps {
+                git branch: 'develop',
+                    url: 'https://github.com/JesusCanor/jenkins-unir.git'
+            }
+        }
+
+        stage('Tests') {
+            parallel {
+                stage('Unit') {
+                    steps {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            sh '''
+                                export PYTHONPATH=$WORKSPACE
+                                pytest --junitxml=result-unit.xml test/unit
+                            '''
+                       }
+                   }
+                }
+                stage('Rest') {
+                    steps {
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+                            sh '''
+                                export FLASK_APP=app/api.py
+                                flask run &
+                                FLASK_PID=$!
+
+                                java -jar /opt/wiremock/wiremock-standalone.jar \
+                                  --port 9090 \
+                                  --root-dir test/wiremock &
+                                
+                                sleep 1
+                                # Esperar que Wiremock esté levantado
+                                for i in $(seq 1 5); do
+                                  if curl -sSf http://127.0.0.1:9090/__admin >/dev/null; then
+                                    echo "Wiremock listo"
+                                    break
+                                  fi
+                                  sleep 1
+                                done
+                          
+                                # Wiremock falla al arrancar
+                                curl -sSf http://127.0.0.1:9090/__admin >/dev/null || {
+                                  echo "WireMock NO arrancó. Log:";
+                                  tail -n 200 wiremock.log || "Tail problem"
+                                  kill "$WIREMOCK_PID" || "Wiremock PID doesn't exist"
+                                  exit 1
+                                }
+
+                                #export PYTHONPATH="$WORKSPACE" NO NECESARIO
+                                pytest --junitxml=result-rest.xml test/rest
+                                kill $FLASK_PID
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Static') {
+            steps {
+                sh '''
+                    flake8 --exit-zero --format=pylint app > flake8.out
+                '''
+                recordIssues tools: [flake8(name: 'Flake8', pattern: 'flake8.out')],
+                    qualityGates: [
+                        [threshold: 8, type: 'TOTAL', unstable: true],
+                        [threshold: 10, type: 'TOTAL', unstable: false]
+                    ]
+            }
+        }
+
+        stage('Security') {
+            steps{
+                sh '''
+                    bandit --exit-zero -r . -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
+                '''
+                recordIssues tools: [pyLint(name: 'Bandit', pattern: 'bandit.out')], qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true], [threshold: 2, type: 'TOTAL', unstable: true]]
+            }
+        }
+
+        stage('Performance') {
+            steps {
+                    sh '''
+                        export FLASK_APP=app/api.py
+                        flask run &
+                        FLASK_PID=$!
+                        
+                        sleep 1
+                        # Esperar que FLASK esté levantado
+                        for i in $(seq 1 5); do
+                          if curl -sSf http://127.0.0.1:5000/isAlive >/dev/null; then
+                            echo "Flask listo"
+                            break
+                          fi
+                          sleep 1
+                        done
+                  
+                        # Flask falla al arrancar
+                        curl -sSf http://127.0.0.1:5000/isAlive >/dev/null || {
+                          echo "Flask NO arrancó";
+                          kill "$FLASK_PID" || "FLASK PID doesn't exist"
+                          exit 1
+                        }
+
+
+                        OUT="$WORKSPACE/test/jmeter/flask-$BUILD_NUMBER.jtl"
+
+                        # Diagnóstico y blindaje
+                        rm -f "$WORKSPACE/test/jmeter/flask-"*.jtl
+                        jmeter -n -t "$WORKSPACE/test/jmeter/flask.jmx" -l "$OUT"
+                        kill "$FLASK_PID" || true
+                    '''
+                perfReport sourceDataFiles: 'test/jmeter/flask-*.jtl'
+            }
+        }
+
+        stage('Cobertura') {
+            steps {
+                sh '''
+                  #export PYTHONPATH="$WORKSPACE" NO NECESARIO
+                  coverage run --branch --source=app --omit=app/__init__.py,app/api.py -m pytest test/unit
+                  coverage xml
+                '''
+                recordCoverage qualityGates: [[criticality: 'ERROR', integerThreshold: 85, metric: 'LINE', threshold: 85.0],
+                                              [integerThreshold: 95, metric: 'LINE', threshold: 95.0],
+                                              [criticality: 'ERROR', integerThreshold: 80, metric: 'BRANCH', threshold: 80.0],
+                                              [integerThreshold: 90, metric: 'BRANCH', threshold: 90.0]], 
+                                              tools: [[parser: 'COBERTURA', pattern: 'coverage.xml']]
+            }
+        }
+
+    }
+}

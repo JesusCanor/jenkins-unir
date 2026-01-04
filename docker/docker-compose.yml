@@ -1,0 +1,23 @@
+services:
+  jenkins:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    networks:
+      - mynet
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: "2gb"
+    ports:
+      - "4444:4444"
+    networks: [mynet]
+    
+networks:
+  mynet:
+    driver: bridge
+
+volumes:
+  jenkins_home:
