@@ -1,4 +1,4 @@
-./pipelinescripts
+pipelinescripts/*
 result.xml
 __pycache__
 .pytest_cache
