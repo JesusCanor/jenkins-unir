@@ -14,7 +14,8 @@ RUN jenkins-plugin-cli \
     --plugins \
     warnings-ng \
     coverage \
-    performance
+    performance \
+    pipeline-stage-view
     #cucumber-reports 
 
 #System versions
