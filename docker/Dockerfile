@@ -8,18 +8,18 @@ RUN apt-get update \
     python3-pip \
     maven \
  && rm -rf /var/lib/apt/lists/*
-
-#System versions
-ARG JMETER_VERSION=5.6.3
-ARG WIREMOCK_VERSION=2.35.0
  
 #Jekins plugins auto installation
 RUN jenkins-plugin-cli \
     --plugins \
     warnings-ng \
     coverage \
-    performance \
-    cucumber-reports
+    performance
+    #cucumber-reports 
+
+#System versions
+ARG JMETER_VERSION=5.6.3
+ARG WIREMOCK_VERSION=2.35.0
 
 # Python dependencies
 COPY requirements.txt /tmp/requirements.txt

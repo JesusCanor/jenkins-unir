@@ -1,5 +1,6 @@
 services:
   jenkins:
+    container_name: practicas-jenkins-1
     build: .
     ports:
       - "8080:8080"
@@ -8,16 +9,10 @@ services:
     networks:
       - mynet
 
-  selenium:
-    image: selenium/standalone-chrome:latest
-    shm_size: "2gb"
-    ports:
-      - "4444:4444"
-    networks: [mynet]
-    
 networks:
   mynet:
     driver: bridge
 
 volumes:
   jenkins_home:
+    name: practicas_jenkins_home
