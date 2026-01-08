@@ -21,7 +21,7 @@ pipeline {
                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') { //Siempre verde
                             sh '''
                                 export PYTHONPATH=$WORKSPACE
-                                pytest test/unit --junitxml=result-unit.xml --cov=. --cov-report=xml:result-coverage.xml
+                                pytest test/unit --junitxml=result-unit.xml --cov=. --cov-branch --cov-report=xml:result-coverage.xml
                             '''
                             junit testResults: 'result-unit.xml', allowEmptyResults: true
                         }
