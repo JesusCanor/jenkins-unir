@@ -1,18 +1,25 @@
 pipeline {
     agent any
 
+
+  post {
+    always {
+      deleteDir()
+    }
+  }
+
     stages {
-
-        stage('Clean workspace') {
-            steps { deleteDir() }
-        }
-
-        stage('Get Code') {
-            steps {
-                git branch: 'develop',
-                    url: 'https://github.com/JesusCanor/jenkins-unir.git'
-            }
-        }
+//Clean Workspace se sustituye por lo anterior. Y el getCode con la configuración de checkout scm propia de jenkins
+//        stage('Clean workspace') {
+//            steps { deleteDir() }
+//        }
+//
+//        stage('Get Code') {
+//            steps {
+//                git branch: 'develop',
+//                    url: 'https://github.com/JesusCanor/jenkins-unir.git'
+//           }
+//        }
 
         stage('Tests') {
             parallel {
