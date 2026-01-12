@@ -1,13 +1,42 @@
 services:
   jenkins:
     container_name: practicas-jenkins-1
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     volumes:
       - jenkins_home:/var/jenkins_home
     networks:
       - mynet
+
+  agente-jmeter:
+     container_name: agente-jmeter
+     build:
+      context: .
+      dockerfile: DockerfileAgenteJmeter
+     environment:
+      - JENKINS_URL=http://jenkins:8080
+      - JENKINS_AGENT_NAME=agente-jmeter
+      - JENKINS_SECRET=96dded3a00927aa53d686a5c34fcc6d6a812d8d5b9036d62156a967bb10b19ae
+      - JENKINS_AGENT_WORKDIR=/home/jenkins/agent
+     networks:
+      - mynet
+     depends_on:
+       - jenkins
+
+  agente-python:
+    container_name: agente-python
+    build:
+      context: .
+      dockerfile: DockerfileAgent
+    networks:
+      - mynet
+    ports:
+      - "2222:22"
+    depends_on:
+      - jenkins
 
 networks:
   mynet:
