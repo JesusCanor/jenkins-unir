@@ -11,8 +11,10 @@ stages {
     stage('Checkout') {
       agent { label 'built-in' }
       steps {
-        git branch: 'master',
-            url: 'https://github.com/JesusCanor/jenkins-unir.git'
+        //git branch: 'master',
+        //    url: 'https://github.com/JesusCanor/jenkins-unir.git'
+
+        checkout scm
         
         sh 'echo "################# USER=$(whoami) | HOST=$(hostname) | WORKSPACE=$WORKSPACE"'
         stash name: 'code', includes: '**'
