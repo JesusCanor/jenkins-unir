@@ -22,6 +22,25 @@ class TestUtil(unittest.TestCase):
         self.assertRaises(TypeError, util.convert_to_number, "s")
         self.assertRaises(TypeError, util.convert_to_number, None)
         self.assertRaises(TypeError, util.convert_to_number, object())
+        
+    def test_invalid_convert_to_number(self):
+        self.assertEqual(7, util.InvalidConvertToNumber("7"))
+        self.assertEqual(-3, util.InvalidConvertToNumber("-3"))
+        self.assertAlmostEqual(2.2, util.InvalidConvertToNumber("2.2"), delta=0.0000001)
+        self.assertAlmostEqual(-2.2, util.InvalidConvertToNumber("-2.2"), delta=0.0000001)
+
+    def test_validate_permissions(self):
+        self.assertTrue(util.validate_permissions("read", "user1"))
+        self.assertFalse(util.validate_permissions("read", "user2"))
+        self.assertTrue(util.validate_permissions("write", "user1"))
+        self.assertFalse(util.validate_permissions("write", "user2"))
+    
+    def test_invalid_convert_to_number_assert(self):
+        self.assertRaises(TypeError, util.InvalidConvertToNumber, "")
+        self.assertRaises(TypeError, util.InvalidConvertToNumber, "3.h")
+        self.assertRaises(TypeError, util.InvalidConvertToNumber, "s")
+        self.assertRaises(TypeError, util.InvalidConvertToNumber, None)
+        self.assertRaises(TypeError, util.InvalidConvertToNumber, object())
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
