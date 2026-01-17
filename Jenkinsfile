@@ -45,6 +45,7 @@ pipeline {
                                 java -jar /opt/wiremock/wiremock-standalone.jar \
                                 --port 9090 \
                                 --root-dir test/wiremock &
+                                WIREMOCK_PID=$!
 
                                 sleep 1
                                 # Esperar que Wiremock esté levantado
